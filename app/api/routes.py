@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Header, HTTPException
 
 from app.core.config import DATABASE_URL, SERVICE_NAME, SERVICE_PORT
-from app.core.security import require_agent_token
+from app.core.security import require_agent_token, require_api_token
 from app.core.utils import now_iso
 from app.core.db import fetch_product, get_connection, normalize_product, record_trace
 from app.schemas.common import A2AError, A2AMeta, A2ARequest, A2AResponse
@@ -38,27 +38,32 @@ def capabilities() -> dict:
 
 
 @router.get("/products")
-def products() -> dict:
+def products(x_api_token: str | None = Header(default=None)) -> dict:
+    require_api_token(x_api_token)
     return list_products()
 
 
 @router.get("/products/{product_id}")
-def product(product_id: str) -> dict:
+def product(product_id: str, x_api_token: str | None = Header(default=None)) -> dict:
+    require_api_token(x_api_token)
     return get_product(product_id)
 
 
 @router.post("/products")
-def create_or_update_product(product: ProductUpsertRequest) -> dict:
+def create_or_update_product(product: ProductUpsertRequest, x_api_token: str | None = Header(default=None)) -> dict:
+    require_api_token(x_api_token)
     return upsert_product(product)
 
 
 @router.patch("/products/{product_id}/stock")
-def patch_stock(product_id: str, request: StockAdjustmentRequest) -> dict:
+def patch_stock(product_id: str, request: StockAdjustmentRequest, x_api_token: str | None = Header(default=None)) -> dict:
+    require_api_token(x_api_token)
     return adjust_stock(product_id, request.quantity_delta)
 
 
 @router.delete("/products/{product_id}")
-def remove_product(product_id: str) -> dict:
+def remove_product(product_id: str, x_api_token: str | None = Header(default=None)) -> dict:
+    require_api_token(x_api_token)
     return delete_product(product_id)
 
 
