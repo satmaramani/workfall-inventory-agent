@@ -25,6 +25,19 @@ def get_product(product_id: str) -> dict:
 def upsert_product(product) -> dict:
     with get_connection() as conn:
         with conn.cursor() as cur:
+            merged_quantity = product.quantity
+            operation = "created_or_replaced"
+            try:
+                existing = fetch_product(cur, product.product_id, for_update=True)
+            except Exception:
+                existing = None
+
+            if existing and product.merge_quantity:
+                merged_quantity = existing["quantity"] + product.quantity
+                operation = "merged_quantity"
+            elif existing:
+                operation = "replaced_existing"
+
             cur.execute(
                 """
                 INSERT INTO inventory_products (
@@ -42,14 +55,19 @@ def upsert_product(product) -> dict:
                 (
                     product.product_id,
                     product.product_name,
-                    product.quantity,
+                    merged_quantity,
                     product.unit_price,
                     product.category,
                 ),
             )
             conn.commit()
             stored = fetch_product(cur, product.product_id)
-    return {"status": "success", "product": stored, "message": "Product upserted successfully"}
+    message = (
+        "Product stock merged successfully"
+        if operation == "merged_quantity"
+        else "Product upserted successfully"
+    )
+    return {"status": "success", "product": stored, "message": message, "operation": operation}
 
 
 def adjust_stock(product_id: str, quantity_delta: int) -> dict:

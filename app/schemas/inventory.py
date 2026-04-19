@@ -9,6 +9,7 @@ class ProductUpsertRequest(BaseModel):
     quantity: int = Field(ge=0)
     unit_price: float = Field(ge=0)
     category: str = "general"
+    merge_quantity: bool = False
 
 
 class StockAdjustmentRequest(BaseModel):
