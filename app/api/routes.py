@@ -17,13 +17,14 @@ router = APIRouter(prefix="/api/v1")
 @router.get("/health")
 def health() -> dict:
     from app.main import app
+    db_available = app.state.db_available
 
     return {
-        "status": "ok",
+        "status": "ok" if db_available else "degraded",
         "service": SERVICE_NAME,
         "port": SERVICE_PORT,
         "database_url": DATABASE_URL.rsplit("@", 1)[-1],
-        "db_available": app.state.db_available,
+        "db_available": db_available,
         "timestamp": now_iso(),
     }
 

@@ -26,6 +26,9 @@ def upsert_product(product) -> dict:
     with get_connection() as conn:
         with conn.cursor() as cur:
             merged_quantity = product.quantity
+            stored_name = product.product_name
+            stored_unit_price = product.unit_price
+            stored_category = product.category
             operation = "created_or_replaced"
             try:
                 existing = fetch_product(cur, product.product_id, for_update=True)
@@ -35,6 +38,11 @@ def upsert_product(product) -> dict:
             if existing and product.merge_quantity:
                 merged_quantity = existing["quantity"] + product.quantity
                 operation = "merged_quantity"
+                # Preserve catalog metadata during stock-top-up unless the user
+                # intentionally performs a full replace flow.
+                stored_name = existing["product_name"]
+                stored_unit_price = existing["unit_price"]
+                stored_category = existing["category"]
             elif existing:
                 operation = "replaced_existing"
 
@@ -54,10 +62,10 @@ def upsert_product(product) -> dict:
                 """,
                 (
                     product.product_id,
-                    product.product_name,
+                    stored_name,
                     merged_quantity,
-                    product.unit_price,
-                    product.category,
+                    stored_unit_price,
+                    stored_category,
                 ),
             )
             conn.commit()
