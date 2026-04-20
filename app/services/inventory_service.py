@@ -4,6 +4,7 @@ from app.core.db import fetch_product, get_connection, normalize_product
 
 
 def list_products() -> dict:
+    # The UI and Concierge both rely on this stable product ordering for predictable dropdowns and matching.
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(
@@ -104,6 +105,7 @@ def adjust_stock(product_id: str, quantity_delta: int) -> dict:
 
 
 def delete_product(product_id: str) -> dict:
+    # Deletion returns the removed product snapshot so the UI can confirm exactly what disappeared.
     with get_connection() as conn:
         with conn.cursor() as cur:
             product = fetch_product(cur, product_id)

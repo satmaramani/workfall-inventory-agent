@@ -24,6 +24,7 @@ def get_connection() -> psycopg.Connection[Any]:
 
 
 def init_db() -> None:
+    # Seed rows make the demo usable immediately, while ON CONFLICT keeps restarts idempotent.
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(
@@ -86,6 +87,7 @@ def normalize_product(row: dict[str, Any]) -> dict[str, Any]:
 
 
 def fetch_product(cur: psycopg.Cursor[Any], product_id: str, for_update: bool = False) -> dict[str, Any]:
+    # FOR UPDATE is only used on write paths so stock reservations remain race-safe.
     sql = """
         SELECT product_id, product_name, quantity, unit_price, category
         FROM inventory_products

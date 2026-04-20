@@ -73,6 +73,7 @@ def a2a_request(request: A2ARequest, x_agent_token: str | None = Header(default=
     try:
         with get_connection() as conn:
             with conn.cursor() as cur:
+                # Inventory handles stock-changing operations under row locks so invoice flows stay consistent.
                 if request.intent == "check_stock":
                     product_id = request.payload["product_id"]
                     quantity = int(request.payload.get("quantity", 1))

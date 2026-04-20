@@ -10,6 +10,7 @@ from app.core.db import init_db
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Inventory has a small startup path: get the schema ready, then begin serving immediately.
     try:
         init_db()
         app.state.db_available = True
